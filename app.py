@@ -80,7 +80,5 @@ predictions = model.predict(X)
 fig, ax = plt.subplots()
 ax.scatter(X, y, label="Actual")
 ax.plot(X, predictions, label="Prediction")
-ax.legend()
+ax.legend()   ✅ CORRECT
 st.pyplot(fig)
-    ax.legend()
-    st.pyplot(fig)
