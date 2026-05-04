@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.linear_model import LinearRegression
 
 st.set_page_config(page_title="Dashboard", layout="wide")
@@ -17,13 +16,13 @@ else:
     st.warning("Using default dataset")
     data = pd.read_csv("sales_data.csv")
 
-# 🧹 DATA CLEANING
+# 🧹 DATA CLEANING (SAFE)
 data.drop_duplicates(inplace=True)
-# Fill numeric columns with 0
+
+# Handle missing values safely
 num_cols = data.select_dtypes(include=['number']).columns
 data[num_cols] = data[num_cols].fillna(0)
 
-# Fill text columns with 'Unknown'
 text_cols = data.select_dtypes(include=['object']).columns
 data[text_cols] = data[text_cols].fillna("Unknown")
 
@@ -31,7 +30,7 @@ data[text_cols] = data[text_cols].fillna("Unknown")
 st.subheader("Dataset Preview")
 st.dataframe(data)
 
-# 🎛️ FILTER (if category exists)
+# 🎛️ FILTER (only if Category exists)
 if "Category" in data.columns:
     category = st.sidebar.selectbox("Select Category", data["Category"].unique())
     filtered_data = data[data["Category"] == category]
@@ -47,40 +46,51 @@ st.write("Average:", filtered_data.select_dtypes(include='number').mean())
 chart = st.sidebar.selectbox("Select Chart", 
                             ["Bar", "Line", "Pie", "Histogram", "Scatter"])
 
-# BAR
+# 📊 BAR CHART
 if chart == "Bar":
-    fig, ax = plt.subplots()
-    filtered_data.groupby('Category').sum()['Sales'].plot(kind='bar', ax=ax)
-    st.pyplot(fig)
+    if "Category" in filtered_data.columns and "Sales" in filtered_data.columns:
+        fig, ax = plt.subplots()
+        filtered_data.groupby('Category')['Sales'].sum().plot(kind='bar', ax=ax)
+        st.pyplot(fig)
+    else:
+        st.error("Bar chart requires 'Category' and 'Sales' columns")
 
-# LINE
+# 📈 LINE CHART
 elif chart == "Line":
-    if "Date" in filtered_data.columns:
-        filtered_data['Date'] = pd.to_datetime(filtered_data['Date'])
+    if "Date" in filtered_data.columns and "Sales" in filtered_data.columns:
+        filtered_data['Date'] = pd.to_datetime(filtered_data['Date'], errors='coerce')
         fig, ax = plt.subplots()
         ax.plot(filtered_data['Date'], filtered_data['Sales'])
         st.pyplot(fig)
+    else:
+        st.error("Line chart requires 'Date' and 'Sales' columns")
 
-# PIE
+# 🥧 PIE CHART
 elif chart == "Pie":
-    fig, ax = plt.subplots()
-    filtered_data.groupby('Category')['Sales'].sum().plot(kind='pie', autopct='%1.1f%%', ax=ax)
-    st.pyplot(fig)
+    if "Category" in filtered_data.columns and "Sales" in filtered_data.columns:
+        fig, ax = plt.subplots()
+        filtered_data.groupby('Category')['Sales'].sum().plot(kind='pie', autopct='%1.1f%%', ax=ax)
+        st.pyplot(fig)
+    else:
+        st.error("Pie chart requires 'Category' and 'Sales' columns")
 
-# HISTOGRAM
+# 📉 HISTOGRAM
 elif chart == "Histogram":
     fig, ax = plt.subplots()
-    ax.hist(filtered_data.select_dtypes(include='number'))
+    filtered_data.select_dtypes(include='number').hist(ax=ax)
     st.pyplot(fig)
 
-# SCATTER
+# 🔵 SCATTER PLOT
 elif chart == "Scatter":
-    fig, ax = plt.subplots()
-    ax.scatter(filtered_data['Sales'], filtered_data['Profit'])
-    st.pyplot(fig)
+    if "Sales" in filtered_data.columns and "Profit" in filtered_data.columns:
+        fig, ax = plt.subplots()
+        ax.scatter(filtered_data['Sales'], filtered_data['Profit'])
+        st.pyplot(fig)
+    else:
+        st.error("Scatter requires 'Sales' and 'Profit' columns")
 
-# 🤖 ML MODEL
-st.subheader("ML Prediction")
+# 🤖 MACHINE LEARNING
+st.subheader("📈 ML Prediction")
 
 if "Sales" in data.columns and "Profit" in data.columns:
     X = data[['Sales']]
@@ -94,5 +104,9 @@ if "Sales" in data.columns and "Profit" in data.columns:
     fig, ax = plt.subplots()
     ax.scatter(X, y, label="Actual")
     ax.plot(X, predictions, label="Prediction")
+    ax.legend()
+    st.pyplot(fig)
+else:
+    st.error("ML requires 'Sales' and 'Profit' columns")on")
     ax.legend()
     st.pyplot(fig)
