@@ -19,7 +19,13 @@ else:
 
 # 🧹 DATA CLEANING
 data.drop_duplicates(inplace=True)
-data.fillna(0, inplace=True)
+# Fill numeric columns with 0
+num_cols = data.select_dtypes(include=['number']).columns
+data[num_cols] = data[num_cols].fillna(0)
+
+# Fill text columns with 'Unknown'
+text_cols = data.select_dtypes(include=['object']).columns
+data[text_cols] = data[text_cols].fillna("Unknown")
 
 # 📊 SHOW DATA
 st.subheader("Dataset Preview")
