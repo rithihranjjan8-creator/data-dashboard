@@ -4,81 +4,89 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
 
-st.title("Data Visualization Dashboard")
+st.set_page_config(page_title="Dashboard", layout="wide")
 
-# Load Data
-@st.cache_data
-def load_data():
+st.title("📊 Advanced Data Visualization Dashboard")
+
+# 📂 FILE UPLOAD
+uploaded_file = st.sidebar.file_uploader("Upload CSV File", type=["csv"])
+
+if uploaded_file is not None:
+    data = pd.read_csv(uploaded_file)
+else:
+    st.warning("Using default dataset")
     data = pd.read_csv("sales_data.csv")
-    data.drop_duplicates(inplace=True)
-    data.fillna(0, inplace=True)
-    return data
 
-data = load_data()
+# 🧹 DATA CLEANING
+data.drop_duplicates(inplace=True)
+data.fillna(0, inplace=True)
 
-# Show Data
-st.subheader("Dataset")
-st.write(data)
+# 📊 SHOW DATA
+st.subheader("Dataset Preview")
+st.dataframe(data)
 
-# Stats
+# 🎛️ FILTER (if category exists)
+if "Category" in data.columns:
+    category = st.sidebar.selectbox("Select Category", data["Category"].unique())
+    filtered_data = data[data["Category"] == category]
+else:
+    filtered_data = data
+
+# 📈 STATS
 st.subheader("Key Insights")
-st.write("Total Sales:", data['Sales'].sum())
-st.write("Average Sales:", data['Sales'].mean())
-st.write("Max Sales:", data['Sales'].max())
-st.write("Min Sales:", data['Sales'].min())
+st.write("Total:", filtered_data.select_dtypes(include='number').sum())
+st.write("Average:", filtered_data.select_dtypes(include='number').mean())
 
-# Chart Selector
-chart = st.selectbox("Select Chart Type", 
-                     ["Bar", "Line", "Pie", "Histogram", "Scatter"])
+# 📊 CHART SELECTOR
+chart = st.sidebar.selectbox("Select Chart", 
+                            ["Bar", "Line", "Pie", "Histogram", "Scatter"])
 
 # BAR
 if chart == "Bar":
     fig, ax = plt.subplots()
-    data.groupby('Category')['Sales'].sum().plot(kind='bar', ax=ax)
-    plt.title("Sales by Category")
+    filtered_data.groupby('Category').sum()['Sales'].plot(kind='bar', ax=ax)
     st.pyplot(fig)
 
 # LINE
 elif chart == "Line":
-    fig, ax = plt.subplots()
-    data['Date'] = pd.to_datetime(data['Date'])
-    ax.plot(data['Date'], data['Sales'])
-    plt.title("Sales Over Time")
-    st.pyplot(fig)
+    if "Date" in filtered_data.columns:
+        filtered_data['Date'] = pd.to_datetime(filtered_data['Date'])
+        fig, ax = plt.subplots()
+        ax.plot(filtered_data['Date'], filtered_data['Sales'])
+        st.pyplot(fig)
 
 # PIE
 elif chart == "Pie":
     fig, ax = plt.subplots()
-    data.groupby('Category')['Sales'].sum().plot(kind='pie', autopct='%1.1f%%', ax=ax)
+    filtered_data.groupby('Category')['Sales'].sum().plot(kind='pie', autopct='%1.1f%%', ax=ax)
     st.pyplot(fig)
 
 # HISTOGRAM
 elif chart == "Histogram":
     fig, ax = plt.subplots()
-    ax.hist(data['Sales'])
-    plt.title("Sales Distribution")
+    ax.hist(filtered_data.select_dtypes(include='number'))
     st.pyplot(fig)
 
 # SCATTER
 elif chart == "Scatter":
     fig, ax = plt.subplots()
-    ax.scatter(data['Sales'], data['Profit'])
-    plt.xlabel("Sales")
-    plt.ylabel("Profit")
+    ax.scatter(filtered_data['Sales'], filtered_data['Profit'])
     st.pyplot(fig)
 
-# Machine Learning
-st.subheader("ML Prediction (Sales → Profit)")
-X = data[['Sales']]
-y = data['Profit']
+# 🤖 ML MODEL
+st.subheader("ML Prediction")
 
-model = LinearRegression()
-model.fit(X, y)
+if "Sales" in data.columns and "Profit" in data.columns:
+    X = data[['Sales']]
+    y = data['Profit']
 
-predictions = model.predict(X)
+    model = LinearRegression()
+    model.fit(X, y)
 
-fig, ax = plt.subplots()
-ax.scatter(X, y, label="Actual")
-ax.plot(X, predictions, label="Prediction")
-ax.legend()
-st.pyplot(fig)
+    predictions = model.predict(X)
+
+    fig, ax = plt.subplots()
+    ax.scatter(X, y, label="Actual")
+    ax.plot(X, predictions, label="Prediction")
+    ax.legend()
+    st.pyplot(fig)
