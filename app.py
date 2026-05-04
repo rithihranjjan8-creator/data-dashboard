@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.linear_model import LinearRegression
 
 st.title("📊 Data Visualization Dashboard")
@@ -29,7 +28,7 @@ st.write("Min Sales:", data['Sales'].min())
 
 # Chart Selector
 chart = st.selectbox("Select Chart Type", 
-                     ["Bar", "Line", "Pie", "Histogram", "Scatter"])
+                    ["Bar", "Line", "Pie", "Histogram", "Scatter"])
 
 # BAR
 if chart == "Bar":
@@ -69,6 +68,7 @@ elif chart == "Scatter":
 
 # Machine Learning
 st.subheader("📈 ML Prediction (Sales → Profit)")
+
 X = data[['Sales']]
 y = data['Profit']
 
@@ -80,5 +80,7 @@ predictions = model.predict(X)
 fig, ax = plt.subplots()
 ax.scatter(X, y, label="Actual")
 ax.plot(X, predictions, label="Prediction")
+ax.legend()
+st.pyplot(fig)
 ax.legend()   ✅ CORRECT
 st.pyplot(fig)
